@@ -1,10 +1,10 @@
 """Application settings, loaded from environment variables (12-factor style)."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     # Comma-separated list. Only needed when the dashboard is served from a
     # different origin than the API (e.g. the Vite dev server).
-    cors_origins: list[str] = Field(default_factory=list)
+    # NoDecode: parse "a,b" ourselves instead of pydantic-settings expecting JSON.
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=list)
 
     # Dashboard sessions
     session_ttl_hours: int = 12

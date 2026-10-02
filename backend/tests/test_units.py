@@ -21,6 +21,16 @@ def test_every_catalog_metric_is_a_sample_column():
     assert set(OVERVIEW_METRICS) <= set(METRIC_NAMES)
 
 
+def test_cors_origins_parse_from_comma_separated_env(monkeypatch):
+    from app.config import Settings
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://u:p@h/db")
+    monkeypatch.setenv("CORS_ORIGINS", "http://a.example, http://b.example")
+    assert Settings().cors_origins == ["http://a.example", "http://b.example"]
+    monkeypatch.setenv("CORS_ORIGINS", "")
+    assert Settings().cors_origins == []
+
+
 def test_password_round_trip():
     hashed = hash_password("s3cret-password")
     assert verify_password(hashed, "s3cret-password")
