@@ -129,3 +129,14 @@ def test_state_file_reflects_progress(config: AgentConfig):
     state = read_state(config.state_path)
     assert state is not None
     assert state["samples_uploaded"] == 1 and state["queue_size"] == 0
+
+
+def test_run_once_reports_delivery(config: AgentConfig, monkeypatch):
+    from infrawatch_agent.cli import run_once
+
+    monkeypatch.setattr("infrawatch_agent.cli.time.sleep", lambda _: None)
+    assert run_once(make_runner(config, FakeServer())) == 0
+
+    down = FakeServer()
+    down.mode = down.down
+    assert run_once(make_runner(config, down)) == 1

@@ -6,7 +6,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from infrawatch_agent import PROTOCOL_VERSION, __version__
 from infrawatch_agent.collectors import HostPaths, default_registry
@@ -16,6 +16,9 @@ from infrawatch_agent.logging_setup import configure_logging
 from infrawatch_agent.security.redact import insecure_permissions, mask_secret
 from infrawatch_agent.state import process_alive, read_state
 from infrawatch_agent.transport.client import HttpTransport, Outcome
+
+if TYPE_CHECKING:
+    from infrawatch_agent.main import AgentRunner
 
 
 def _print_kv(rows: list[tuple[str, Any]]) -> None:
@@ -42,7 +45,7 @@ def _security_warnings(config: AgentConfig, config_path: Path | None) -> list[st
             "unencrypted. Put the server behind TLS."
         )
     if config_path and insecure_permissions(config_path):
-        warnings.append(f"{config_path} is readable by other users; run: chmod 600 {config_path}")
+        warnings.append(f"{config_path} is readable by other users; run: chmod o-rwx {config_path}")
     if not config.verify_tls:
         warnings.append("VERIFY_TLS=false disables certificate checks (man-in-the-middle risk).")
     return warnings
@@ -59,13 +62,19 @@ def cmd_start(config: AgentConfig, args: argparse.Namespace) -> int:
         logging.getLogger("agent").warning("config.insecure", extra={"warning": warning})
     runner = AgentRunner(config)
     if args.once:
-        runner.registry.prime()
-        time.sleep(1)
-        runner.cycle()
-        runner.shutdown()
-        return 0 if runner.buffer.size() == 0 else 1
+        return run_once(runner)
     runner.run_forever()
     return 0
+
+
+def run_once(runner: "AgentRunner") -> int:
+    """Collect and upload a single sample; exit 0 only if nothing is left buffered."""
+    runner.registry.prime()
+    time.sleep(1)
+    runner.cycle()
+    pending = runner.buffer.size()
+    runner.shutdown()
+    return 0 if pending == 0 else 1
 
 
 def cmd_status(config: AgentConfig, args: argparse.Namespace) -> int:
