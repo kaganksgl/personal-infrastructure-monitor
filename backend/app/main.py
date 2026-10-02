@@ -47,7 +47,14 @@ def _start_background_jobs(app: FastAPI) -> list[asyncio.Task[None]]:
 
     async def heartbeat() -> None:
         async with state.db.sessionmaker() as db:
-            await check_heartbeats(db, settings, state.alert_engine, state.hub, datetime.now(UTC))
+            await check_heartbeats(
+                db,
+                settings,
+                state.alert_engine,
+                state.hub,
+                datetime.now(UTC),
+                server_started_at=state.started_at_utc,
+            )
 
     async def retention() -> None:
         async with state.db.sessionmaker() as db:
@@ -79,6 +86,7 @@ def create_app(settings: Settings | None = None, *, background_jobs: bool = True
         app.state.ingest_limiter = RateLimiter(settings.ingest_rate_per_minute, 60)
         app.state.login_limiter = RateLimiter(settings.login_rate_per_minute, 60)
         app.state.started_at = time.monotonic()
+        app.state.started_at_utc = datetime.now(UTC)
         tasks = _start_background_jobs(app) if background_jobs else []
         log.info("app.started", extra={"version": __version__, "env": settings.environment})
         yield

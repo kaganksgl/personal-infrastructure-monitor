@@ -17,9 +17,21 @@ log = logging.getLogger("heartbeat")
 
 
 async def check_heartbeats(
-    db: AsyncSession, settings: Settings, engine: AlertEngine, hub: Hub, now: datetime
+    db: AsyncSession,
+    settings: Settings,
+    engine: AlertEngine,
+    hub: Hub,
+    now: datetime,
+    *,
+    server_started_at: datetime | None = None,
 ) -> list[str]:
-    cutoff = now - timedelta(seconds=settings.agent_offline_after_seconds)
+    window = timedelta(seconds=settings.agent_offline_after_seconds)
+    # Startup grace period: after the *backend* was down, every agent's
+    # last_seen is stale. Give agents one full window to reconnect before
+    # declaring them offline, otherwise a server restart pages for every host.
+    if server_started_at is not None and now - server_started_at < window:
+        return []
+    cutoff = now - window
     stale = (
         await db.execute(
             select(Agent).where(Agent.is_online.is_(True), Agent.last_seen_at < cutoff)

@@ -119,3 +119,25 @@ async def test_rule_management(admin_client: httpx.AsyncClient, agent_creds):
 
     bad = await admin_client.post("/api/v1/alerts/rules", json={**rule, "metric": "nope"})
     assert bad.status_code == 422
+
+
+async def test_no_offline_alerts_during_server_startup_grace_period(
+    admin_client: httpx.AsyncClient, agent_creds, app, engine: AsyncEngine
+):
+    await _post(admin_client, agent_creds)
+    async with engine.begin() as conn:
+        await conn.execute(
+            update(Agent).values(last_seen_at=datetime.now(UTC) - timedelta(minutes=5))
+        )
+    now = datetime.now(UTC)
+    async with app.state.db.sessionmaker() as db:
+        went = await check_heartbeats(
+            db,
+            app.state.settings,
+            app.state.alert_engine,
+            app.state.hub,
+            now,
+            server_started_at=now - timedelta(seconds=5),
+        )
+    assert went == []
+    assert await _firing(admin_client) == []
