@@ -64,7 +64,7 @@ def test_world_readable_config_is_flagged(tmp_path: Path):
     cfg.write_text("API_KEY=x\n")
     cfg.chmod(0o644)
     assert insecure_permissions(cfg)
-    cfg.chmod(0o600)
+    cfg.chmod(0o640)
     assert not insecure_permissions(cfg)
 
 

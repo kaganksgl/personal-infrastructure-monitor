@@ -31,9 +31,13 @@ def mask_secret(value: str, visible: int = 8) -> str:
 
 
 def insecure_permissions(path: Path) -> bool:
-    """True if a file holding the API key is readable by group/others."""
+    """True if a file holding the API key is accessible to *other* users.
+
+    Group access is allowed: the recommended layout is root:infrawatch 0640,
+    so only root and the agent's own service group can read the key.
+    """
     try:
         mode = os.stat(path).st_mode
     except OSError:
         return False
-    return bool(mode & (stat.S_IRWXG | stat.S_IRWXO))
+    return bool(mode & stat.S_IRWXO)
