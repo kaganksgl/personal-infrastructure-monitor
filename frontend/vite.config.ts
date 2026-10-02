@@ -17,7 +17,18 @@ export default defineConfig({
   },
   build: {
     sourcemap: false,
-    chunkSizeWarningLimit: 900,
+    // Vendor code changes rarely; separate chunks stay cached across deploys.
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            { name: "charts", test: /node_modules[\\/](recharts|d3-|victory-vendor|es-toolkit)/ },
+            { name: "mantine", test: /node_modules[\\/]@mantine/ },
+            { name: "vendor", test: /node_modules/ },
+          ],
+        },
+      },
+    },
   },
   test: {
     environment: "jsdom",

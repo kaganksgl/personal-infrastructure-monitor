@@ -24,8 +24,8 @@ export function AgentKeyModal({ created, onClose }: { created: AgentCreated | nu
             if you lose it.
           </Alert>
           <Text size="sm">
-            1. Save this as <Code>/etc/infrawatch/agent.env</Code> on <b>{created.agent.display_name}</b> (mode
-            600):
+            1. Save this as <Code>/etc/infrawatch/agent.env</Code> on <b>{created.agent.display_name}</b>, readable
+            only by root and the agent (<Code>scripts/install-agent.sh</Code> does this for you):
           </Text>
           <Code block>{env}</Code>
           <CopyButton value={env}>
