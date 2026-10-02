@@ -43,7 +43,8 @@ test-db: ## Start a disposable PostgreSQL for tests/dev on 127.0.0.1:5433
 		$(CONTAINER) run -d --rm --name $(TEST_DB_NAME) -p 127.0.0.1:5433:5432 \
 		-e POSTGRES_USER=infrawatch -e POSTGRES_PASSWORD=testpass -e POSTGRES_DB=infrawatch_test \
 		docker.io/library/postgres:16-alpine >/dev/null
-	@until $(CONTAINER) exec $(TEST_DB_NAME) pg_isready -U infrawatch -d infrawatch_test >/dev/null 2>&1; do sleep 1; done
+	@# TCP check: the image's init phase runs a temporary socket-only server.
+	@until $(CONTAINER) exec $(TEST_DB_NAME) pg_isready -h 127.0.0.1 -U infrawatch -d infrawatch_test >/dev/null 2>&1; do sleep 1; done
 	@$(CONTAINER) exec $(TEST_DB_NAME) psql -U infrawatch -d infrawatch_test -tc \
 		"SELECT 1 FROM pg_database WHERE datname='infrawatch_dev'" | grep -q 1 || \
 		$(CONTAINER) exec $(TEST_DB_NAME) psql -U infrawatch -d infrawatch_test -qc "CREATE DATABASE infrawatch_dev"

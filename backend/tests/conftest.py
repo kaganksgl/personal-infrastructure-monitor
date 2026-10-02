@@ -57,7 +57,7 @@ def migrated_database() -> Iterator[None]:
 
 
 @pytest.fixture(scope="session")
-async def engine() -> AsyncIterator[AsyncEngine]:
+async def engine(migrated_database: None) -> AsyncIterator[AsyncEngine]:
     eng = create_async_engine(TEST_DATABASE_URL)
     async with eng.begin() as conn:
         # Snapshot the seeded default rules so each test can start from them.
