@@ -1,0 +1,55 @@
+# systemd unit for the InfraWatch agent.
+#
+# Install (see README "Linux systemd setup" or scripts/install-agent.sh):
+#   sudo cp scripts/infrawatch-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now infrawatch-agent
+#
+# Runs as an unprivileged dedicated user. Reading /proc, /sys and statvfs
+# requires no special privileges; only some processes' command lines and a few
+# root-only mounts are invisible, which the agent handles gracefully.
+
+[Unit]
+Description=InfraWatch monitoring agent
+Documentation=https://github.com/kaganksgl/infrawatch
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=infrawatch
+Group=infrawatch
+EnvironmentFile=/etc/infrawatch/agent.env
+ExecStart=/opt/infrawatch-agent/bin/infrawatch-agent --config /etc/infrawatch/agent.env start
+Restart=on-failure
+RestartSec=5
+# Buffer + state live in /var/lib/infrawatch (exported as $STATE_DIRECTORY).
+StateDirectory=infrawatch
+StateDirectoryMode=0700
+
+# Resource limits: the monitor must never become the problem.
+CPUQuota=10%
+MemoryMax=128M
+Nice=10
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
