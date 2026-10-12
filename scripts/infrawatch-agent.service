@@ -10,7 +10,7 @@
 
 [Unit]
 Description=InfraWatch monitoring agent
-Documentation=https://github.com/kaganksgl/infrawatch
+Documentation=https://github.com/kaganksgl/personal-infrastructure-monitor
 After=network-online.target
 Wants=network-online.target
 

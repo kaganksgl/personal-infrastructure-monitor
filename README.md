@@ -76,7 +76,7 @@ sequenceDiagram
 Repository layout:
 
 ```text
-infrawatch/
+personal-infrastructure-monitor/
 ├── agent/                     # Linux monitoring agent (pip-installable)
 │   ├── infrawatch_agent/
 │   │   ├── collectors/        # cpu, memory, disk, network, sensors, processes, host
@@ -160,8 +160,8 @@ Requirements: Docker with Compose (or Podman + podman-compose) for the server; P
 hosts. For development: Python 3.12+, Node 22+.
 
 ```bash
-git clone https://github.com/kaganksgl/infrawatch.git
-cd infrawatch
+git clone https://github.com/kaganksgl/personal-infrastructure-monitor.git
+cd personal-infrastructure-monitor
 make install          # .venv with backend + agent (dev extras), and frontend node_modules
 ```
 
